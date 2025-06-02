@@ -13,9 +13,10 @@ pipeline {
         DOCKER_REGISTRY   = "ghcr.io"
         GITHUB_USERNAME   = "kyurak54" // 당신의 GitHub 사용자 이름
         APP_NAME          = "study-fastapi" // FastAPI 프로젝트 이름 (GHCR 레포지토리 이름으로 사용)
-        DOCKER_TAG        = "${env.BUILD_NUMBER}" // Jenkins 빌드 번호를 이미지 태그로 사용
-        DOCKER_FULL_IMAGE = "${DOCKER_REGISTRY}/${GITHUB_USERNAME}/${APP_NAME}:${DOCKER_TAG}" // 완성된 이미지 이름 (예: ghcr.io/kyurak54/my-fastapi-api:123)
-        DOCKER_CREDS_ID   = "github_token" // Jenkins Credential ID (GHCR 로그인 및 푸시용)
+        DOCKER_IMAGE_NAME   = "${DOCKER_REGISTRY}/${GITHUB_USERNAME}/${APP_NAME}"
+        DOCKER_TAG          = "${env.BUILD_NUMBER}"
+        DOCKER_FULL_IMAGE   = "${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+        DOCKER_CREDS_ID     = "github_token"
 
         // --- WAS 서버 (배포 대상) 관련 변수 ---
         WAS_USER          = "pwas" // WAS 서버 SSH 사용자 이름
@@ -67,6 +68,24 @@ pipeline {
                             docker logout ${DOCKER_REGISTRY}
                         """
                     }
+                }
+            }
+        }
+        
+        stage('🧹 Cleanup Docker Images (Jenkins)') {
+            steps {
+                // Jenkins 서버에서 오래된 Docker 이미지 정리
+                script {
+                    def imageToClean = "${DOCKER_IMAGE_NAME}"
+                    sh """
+                        echo "[Jenkins] 오래된 이미지 2개만 남기고 삭제"
+                        docker images --format '{{.Repository}}:{{.Tag}}' \\
+                            | grep "^${imageToClean}:" \\
+                            | sort -t':' -k2Vr \\
+                            | tail -n +3 \\
+                            | xargs -r docker rmi
+                        echo "[Jenkins] 이미지 정리 완료"
+                    """
                 }
             }
         }
