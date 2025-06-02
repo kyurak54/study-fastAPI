@@ -86,48 +86,49 @@ pipeline {
         }
 
         stage('🚀 Deploy and Run on WAS') {
-            steps {Add commentMore actions
-                        // WAS 서버에서 컨테이너 실행 및 정리
-                        sshagent(credentials: ['wa']) {
-                            script {
-                                def imageToClean = "${DOCKER_IMAGE_NAME}"
-                                def fullImage = "${DOCKER_FULL_IMAGE}"
-                                def appName = "${APP_NAME}"
+            steps {
+                // WAS 서버에서 컨테이너 실행 및 정리
+                sshagent(credentials: ['wa']) {
+                    script {
+                        def imageToClean = "${DOCKER_IMAGE_NAME}"
+                        def fullImage = "${DOCKER_FULL_IMAGE}"
+                        def appName = "${APP_NAME}"
 
-                                sh """
-        ssh -o StrictHostKeyChecking=no ${WAS_USER}@${WAS_HOST} <<EOF
-        set -e
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${WAS_USER}@${WAS_HOST} <<EOF
+                            set -e
 
-        // echo "[INFO] WAS 서버에서 GHCR 로그인 시작"
-        // # GHCR 로그인 (WAS 서버 내에서 실행)
-        echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
-        // echo "[INFO] WAS 서버에서 GHCR 로그인 성공"
+                            // echo "[INFO] WAS 서버에서 GHCR 로그인 시작"
+                            // # GHCR 로그인 (WAS 서버 내에서 실행)
+                            echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+                            // echo "[INFO] WAS 서버에서 GHCR 로그인 성공"
 
-        echo "[WAS] Docker pull ⇒  ${fullImage}"Add commentMore actions
-        docker pull "${fullImage}"
+                            echo "[WAS] Docker pull ⇒  ${fullImage}"Add commentMore actions
+                            docker pull "${fullImage}"
 
-        echo "[WAS] 기존 컨테이너 정리"
-        docker rm -f "${appName}" 2>/dev/null || true
+                            echo "[WAS] 기존 컨테이너 정리"
+                            docker rm -f "${appName}" 2>/dev/null || true
 
-        echo "[WAS] 새 컨테이너 실행"
-        docker run -d --name "${appName}" -p 18000:8000 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul "${fullImage}"
+                            echo "[WAS] 새 컨테이너 실행"
+                            docker run -d --name "${appName}" -p 18000:8000 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul "${fullImage}"
 
-        echo "[WAS] 오래된 이미지 2개만 남기고 삭제"
-        docker images --format '{{.Repository}}:{{.Tag}}' \\
-            | grep "^${imageToClean}:" \\
-            | sort -t':' -k2Vr \\
-            | tail -n +3 \\
-            | xargs -r docker rmi
+                            echo "[WAS] 오래된 이미지 2개만 남기고 삭제"
+                            docker images --format '{{.Repository}}:{{.Tag}}' \\
+                                | grep "^${imageToClean}:" \\
+                                | sort -t':' -k2Vr \\
+                                | tail -n +3 \\
+                                | xargs -r docker rmi
 
-        echo "[WAS] 이미지 정리 완료"
+                            echo "[WAS] 이미지 정리 완료"
 
-        echo "[INFO] WAS 서버에서 GHCR 로그아웃"
-        docker logout $DOCKER_REGISTRY
-        
-        EOF
-                                """
-                            }
-        }
+                            echo "[INFO] WAS 서버에서 GHCR 로그아웃"
+                            docker logout $DOCKER_REGISTRY
+                            
+                            EOF
+                        """
+                    }
+                }
+            }
     }
 
         post {
