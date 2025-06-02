@@ -56,17 +56,14 @@ pipeline {
 
         stage('📤 Push Docker Image to GHCR') {
             steps {
-                script {
-                    // Jenkins Credentials에서 사용자 이름과 비밀번호(PAT)를 가져와 Docker 로그인
+                steps {
+                    // GitHub Container Registry로 이미지 푸시
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'GH_USERNAME', passwordVariable: 'GH_TOKEN')]) {
-                        sh """
-                            echo "--- Docker Login to ${DOCKER_REGISTRY} ---"
-                            echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin || exit 1
-                            echo "--- Pushing image: ${DOCKER_FULL_IMAGE} ---"
-                            docker push ${DOCKER_FULL_IMAGE} || exit 1
-                            echo "--- Docker Logout ---"
-                            docker logout ${DOCKER_REGISTRY}
-                        """
+                        sh '''
+                            echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+                            docker push $DOCKER_FULL_IMAGE
+                            docker logout $DOCKER_REGISTRY
+                        '''
                     }
                 }
             }
