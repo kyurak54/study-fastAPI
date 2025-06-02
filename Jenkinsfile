@@ -86,54 +86,47 @@ pipeline {
         }
 
         stage('🚀 Deploy and Run on WAS') {
-            steps {
-                /* 1) GHCR 로그인에 필요한 PAT를 Jenkins 쉘 변수에만 주입  */
-                withCredentials([usernamePassword(
-                        credentialsId: "${DOCKER_CREDS_ID}",
-                        usernameVariable: 'GH_USER',
-                        passwordVariable: 'GH_PAT'
-                )]) {
+            steps {Add commentMore actions
+                        // WAS 서버에서 컨테이너 실행 및 정리
+                        sshagent(credentials: ['wa']) {
+                            script {
+                                def imageToClean = "${DOCKER_IMAGE_NAME}"
+                                def fullImage = "${DOCKER_FULL_IMAGE}"
+                                def appName = "${APP_NAME}"
 
-                    /* 2) SSH 비밀키로 원격 접속 */
-                    sshagent(credentials: ['wa']) {
+                                sh """
+        ssh -o StrictHostKeyChecking=no ${WAS_USER}@${WAS_HOST} <<EOF
+        set -e
 
-                        /* 3) Groovy 보간 금지(single-quoted ''' 블록) */
-                        sh '''
-                        echo "[Jenkins] WAS 서버로 배포 시작"
+        // echo "[INFO] WAS 서버에서 GHCR 로그인 시작"
+        // # GHCR 로그인 (WAS 서버 내에서 실행)
+        echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+        // echo "[INFO] WAS 서버에서 GHCR 로그인 성공"
 
-                        ## PAT를 SSH 원격 명령에 파이프로 전달 ##
-                        echo "$GH_PAT" | ssh -o StrictHostKeyChecking=no $WAS_USER@$WAS_HOST bash -s <<'ENDSSH'
-                        set -e
-                        echo "[WAS] GHCR 로그인"
-                        read -r PAT
-                        echo "$PAT" | docker login $DOCKER_REGISTRY -u "$GH_USER" --password-stdin
+        echo "[WAS] Docker pull ⇒  ${fullImage}"Add commentMore actions
+        docker pull "${fullImage}"
 
-                        echo "[WAS] 이미지 풀 ➜ $DOCKER_FULL_IMAGE"
-                        docker pull "$DOCKER_FULL_IMAGE"
+        echo "[WAS] 기존 컨테이너 정리"
+        docker rm -f "${appName}" 2>/dev/null || true
 
-                        echo "[WAS] 컨테이너 정리"
-                        docker rm -f "$APP_NAME" 2>/dev/null || true
+        echo "[WAS] 새 컨테이너 실행"
+        docker run -d --name "${appName}" -p 18000:8000 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul "${fullImage}"
 
-                        echo "[WAS] 새 컨테이너 실행"
-                        docker run -d --name "$APP_NAME" \
-                                    -p 18000:8000 \
-                                    -v /etc/localtime:/etc/localtime:ro \
-                                    -e TZ=Asia/Seoul \
-                                    "$DOCKER_FULL_IMAGE"
+        echo "[WAS] 오래된 이미지 2개만 남기고 삭제"
+        docker images --format '{{.Repository}}:{{.Tag}}' \\
+            | grep "^${imageToClean}:" \\
+            | sort -t':' -k2Vr \\
+            | tail -n +3 \\
+            | xargs -r docker rmi
 
-                        echo "[WAS] 오래된 이미지 정리"
-                        docker images --format '{{.Repository}}:{{.Tag}}' |
-                            grep "^$DOCKER_IMAGE_NAME:" |
-                            sort -t':' -k2Vr |
-                            tail -n +$((KEEP_LATEST_COUNT+1)) |
-                            xargs -r docker rmi
+        echo "[WAS] 이미지 정리 완료"
 
-                        docker logout $DOCKER_REGISTRY
-                        EOSH
-                        '''
-                    }
-                }
-            }
+        echo "[INFO] WAS 서버에서 GHCR 로그아웃"
+        docker logout $DOCKER_REGISTRY
+        
+        EOF
+                                """
+                            }
         }
     }
 
