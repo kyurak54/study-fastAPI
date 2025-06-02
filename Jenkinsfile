@@ -102,7 +102,7 @@ pipeline {
                         echo "[Jenkins] WAS 서버로 배포 시작"
 
                         ## PAT를 SSH 원격 명령에 파이프로 전달 ##
-                        echo "$GH_PAT" | ssh -o StrictHostKeyChecking=no $WAS_USER@$WAS_HOST bash -s -- <<'EOSH'
+                        echo "$GH_PAT" | ssh -o StrictHostKeyChecking=no $WAS_USER@$WAS_HOST bash -s -- <<'ENDSSH'
                         set -e
                         echo "[WAS] GHCR 로그인"
                         read -r PAT
