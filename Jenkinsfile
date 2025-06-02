@@ -57,9 +57,9 @@ pipeline {
         stage('📤 Push Docker Image to GHCR') {
             steps {
                 // GitHub Container Registry로 이미지 푸시
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'GH_USERNAME', passwordVariable: 'GH_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GH_TOKEN')]) {
                     sh '''
-                        echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+                        echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GITHUB_USERNAME" --password-stdin
                         docker push $DOCKER_FULL_IMAGE
                         docker logout $DOCKER_REGISTRY
                     '''
@@ -100,7 +100,7 @@ pipeline {
 
                             // echo "[INFO] WAS 서버에서 GHCR 로그인 시작  "
                             // # GHCR 로그인 (WAS 서버 내에서 실행)
-                            echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+                            echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GITHUB_USERNAME" --password-stdin
                             // echo "[INFO] WAS 서버에서 GHCR 로그인 성공"
 
                             echo "[WAS] Docker pull ⇒  ${fullImage}"Add commentMore actions
