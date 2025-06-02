@@ -130,17 +130,18 @@ pipeline {
                 }
             }
         }
+    }
 
-        post {
-            success {
-                echo '✅ 배포 성공!'
-            }
-            failure {
-                echo '❌ 배포 실패. 확인 필요.'
-            }
-            always {
-                cleanWs()
-            }
+    post {
+        success {
+            echo '✅ 배포 성공!'
+        }
+        failure {
+            echo '❌ 배포 실패. 확인 필요.'
+        }
+        always {
+            cleanWs()
         }
     }
+
 }
