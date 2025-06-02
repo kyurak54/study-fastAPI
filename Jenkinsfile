@@ -87,50 +87,51 @@ pipeline {
 
         stage('🚀 Deploy and Run on WAS') {
             steps {
-            /* 1) GHCR 로그인에 필요한 PAT를 Jenkins 쉘 변수에만 주입  */
-            withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_CREDS_ID}",
-                    usernameVariable: 'GH_USER',
-                    passwordVariable: 'GH_PAT'
-            )]) {
+                /* 1) GHCR 로그인에 필요한 PAT를 Jenkins 쉘 변수에만 주입  */
+                withCredentials([usernamePassword(
+                        credentialsId: "${DOCKER_CREDS_ID}",
+                        usernameVariable: 'GH_USER',
+                        passwordVariable: 'GH_PAT'
+                )]) {
 
-                /* 2) SSH 비밀키로 원격 접속 */
-                sshagent(credentials: ["${wa}"]) {
+                    /* 2) SSH 비밀키로 원격 접속 */
+                    sshagent(credentials: ["${wa}"]) {
 
-                    /* 3) Groovy 보간 금지(single-quoted ''' 블록) */
-                    sh '''
-                    echo "[Jenkins] WAS 서버로 배포 시작"
+                        /* 3) Groovy 보간 금지(single-quoted ''' 블록) */
+                        sh '''
+                        echo "[Jenkins] WAS 서버로 배포 시작"
 
-                    ## PAT를 SSH 원격 명령에 파이프로 전달 ##
-                    echo "$GH_PAT" | ssh -o StrictHostKeyChecking=no $WAS_USER@$WAS_HOST bash -s -- <<'EOSH'
-                    set -e
-                    echo "[WAS] GHCR 로그인"
-                    read -r PAT
-                    echo "$PAT" | docker login $DOCKER_REGISTRY -u "$GH_USER" --password-stdin
+                        ## PAT를 SSH 원격 명령에 파이프로 전달 ##
+                        echo "$GH_PAT" | ssh -o StrictHostKeyChecking=no $WAS_USER@$WAS_HOST bash -s -- <<'EOSH'
+                        set -e
+                        echo "[WAS] GHCR 로그인"
+                        read -r PAT
+                        echo "$PAT" | docker login $DOCKER_REGISTRY -u "$GH_USER" --password-stdin
 
-                    echo "[WAS] 이미지 풀 ➜ $DOCKER_FULL_IMAGE"
-                    docker pull "$DOCKER_FULL_IMAGE"
+                        echo "[WAS] 이미지 풀 ➜ $DOCKER_FULL_IMAGE"
+                        docker pull "$DOCKER_FULL_IMAGE"
 
-                    echo "[WAS] 컨테이너 정리"
-                    docker rm -f "$APP_NAME" 2>/dev/null || true
+                        echo "[WAS] 컨테이너 정리"
+                        docker rm -f "$APP_NAME" 2>/dev/null || true
 
-                    echo "[WAS] 새 컨테이너 실행"
-                    docker run -d --name "$APP_NAME" \
-                                -p 18000:8000 \
-                                -v /etc/localtime:/etc/localtime:ro \
-                                -e TZ=Asia/Seoul \
-                                "$DOCKER_FULL_IMAGE"
+                        echo "[WAS] 새 컨테이너 실행"
+                        docker run -d --name "$APP_NAME" \
+                                    -p 18000:8000 \
+                                    -v /etc/localtime:/etc/localtime:ro \
+                                    -e TZ=Asia/Seoul \
+                                    "$DOCKER_FULL_IMAGE"
 
-                    echo "[WAS] 오래된 이미지 정리"
-                    docker images --format '{{.Repository}}:{{.Tag}}' |
-                        grep "^$DOCKER_IMAGE_NAME:" |
-                        sort -t':' -k2Vr |
-                        tail -n +$((KEEP_LATEST_COUNT+1)) |
-                        xargs -r docker rmi
+                        echo "[WAS] 오래된 이미지 정리"
+                        docker images --format '{{.Repository}}:{{.Tag}}' |
+                            grep "^$DOCKER_IMAGE_NAME:" |
+                            sort -t':' -k2Vr |
+                            tail -n +$((KEEP_LATEST_COUNT+1)) |
+                            xargs -r docker rmi
 
-                    docker logout $DOCKER_REGISTRY
-                    EOSH
-                    '''
+                        docker logout $DOCKER_REGISTRY
+                        EOSH
+                        '''
+                    }
                 }
             }
         }
