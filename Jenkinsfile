@@ -98,7 +98,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no ${WAS_USER}@${WAS_HOST} <<EOF
                             set -e
 
-                            // echo "[INFO] WAS 서버에서 GHCR 로그인 시작"
+                            // echo "[INFO] WAS 서버에서 GHCR 로그인 시작  "
                             // # GHCR 로그인 (WAS 서버 내에서 실행)
                             echo "\$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
                             // echo "[INFO] WAS 서버에서 GHCR 로그인 성공"
