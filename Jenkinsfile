@@ -95,7 +95,7 @@ pipeline {
                 )]) {
 
                     /* 2) SSH 비밀키로 원격 접속 */
-                    sshagent(credentials: ["${wa}"]) {
+                    sshagent(credentials: ['wa']) {
 
                         /* 3) Groovy 보간 금지(single-quoted ''' 블록) */
                         sh '''
