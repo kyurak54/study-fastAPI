@@ -56,15 +56,13 @@ pipeline {
 
         stage('📤 Push Docker Image to GHCR') {
             steps {
-                steps {
-                    // GitHub Container Registry로 이미지 푸시
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'GH_USERNAME', passwordVariable: 'GH_TOKEN')]) {
-                        sh '''
-                            echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
-                            docker push $DOCKER_FULL_IMAGE
-                            docker logout $DOCKER_REGISTRY
-                        '''
-                    }
+                // GitHub Container Registry로 이미지 푸시
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS_ID}", usernameVariable: 'GH_USERNAME', passwordVariable: 'GH_TOKEN')]) {
+                    sh '''
+                        echo "$GH_TOKEN" | docker login $DOCKER_REGISTRY -u "$GH_USERNAME" --password-stdin
+                        docker push $DOCKER_FULL_IMAGE
+                        docker logout $DOCKER_REGISTRY
+                    '''
                 }
             }
         }
