@@ -150,7 +150,7 @@ pipeline {
                 echo '❌ 배포 실패. 확인 필요.'
             }
             always {
-                cleanWs() // Jenkins 작업 공간 정리
+                cleanWs()
             }
         }
 }
