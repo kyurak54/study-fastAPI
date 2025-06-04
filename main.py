@@ -22,7 +22,7 @@ fake_db = {
     2: {"name": "Banana", "description": "Yellow fruit", "price": 0.80},
 }
 
-@app.get('/')
+@app.get('/papi')
 async def read_root():
     """루트 엔드포인트: 환영메세지 """
     return {"message": "Welcom to My FastAPI Example API!"}
