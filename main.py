@@ -18,8 +18,8 @@ class Item(BaseModel):
 
 # 임시 데이터베이스 (실제로는 DB 사용)
 fake_db = {
-    1: {"name": "Apple", "description": "Red fruit", "price": 1.20},
-    2: {"name": "Banana", "description": "Yellow fruit", "price": 0.80},
+    1: {"id": 1, "name": "Apple", "description": "Red fruit", "price": 1.20},
+    2: {"id": 2, "name": "Banana", "description": "Yellow fruit", "price": 0.80},
 }
 
 @app.get('/papi')
